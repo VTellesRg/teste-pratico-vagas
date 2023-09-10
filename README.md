@@ -6,7 +6,7 @@
 - Como proposto não foi realizado deploy das aplicações, para rodar o projeto é necessário clonar o repositório e seguir os passos abaixo:
 1. certifique-se de que possui o node instalado em sua máquina (versão 16.4 ou superior)
 2. abra o terminal na pasta do projeto navegue pelo terminal para diretório src/app e execute o comando `npm install ` para instalar as dependências do projeto
-3. após a instalação das dependências execute o comando  `npm start` para iniciar a página no endereço `http://localhost:3000/`
+3. após a instalação das dependências execute o comando  `npm run dev` para iniciar a página no endereço `http://localhost:3000/`
 
 4. antes de acessar a página é necessário iniciar o servidor back-end, para isso siga os passos do repositório do back-end [clique aqui](https://github.com/VTellesRg/teste-vagas-backend)
 
