@@ -1,41 +1,23 @@
 'use client';
 
-import React from 'react';
 import { ProductType } from './types/ProductType';
 import { api } from './utils/api';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 const Page = () => {
 
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const [isValidate, setIsValidate] = useState(false);
+	const [loading, setLoading] = useState(false);
 	const [action, setAction] = useState('Validando...');
 
-	const dt: ProductType[] = [
-		{ valid_from: 'OK', code: 16, name: 'AZEITE  PORTUGUÊS EXTRA VIRGEM GALLO 500ML', cost_price: 18.44, sales_price: 20.49 },
-		{ valid_from: 'OK', code: 18, name: 'BEBIDA ENERGÉTICA VIBE 2L', cost_price: 8.09, sales_price: 8.99 },
-		{ valid_from: 'OK', code: 19, name: 'ENERGÉTICO  RED BULL ENERGY DRINK 250ML', cost_price: 6.56, sales_price: 7.29 },
-		{ valid_from: 'erro a', code: 20, name: 'ENERGÉTICO RED BULL ENERGY DRINK 355ML', cost_price: 9.71, sales_price: 10.79 },
-		{ valid_from: 'OK', code: 21, name: 'BEBIDA ENERGÉTICA RED BULL RED EDITION 250ML', cost_price: 10.71, sales_price: 11.71 },
-		{ valid_from: 'OK', code: 22, name: 'ENERGÉTICO  RED BULL ENERGY DRINK SEM AÇÚCAR 250ML', cost_price: 6.74, sales_price: 7.49 },
-		{ valid_from: 'OK', code: 23, name: 'ÁGUA MINERAL BONAFONT SEM GÁS 1,5L', cost_price: 2.15, sales_price: 2.39 },
-		{ valid_from: 'OK', code: 24, name: 'FILME DE PVC WYDA 28CMX15M', cost_price: 3.59, sales_price: 3.99 },
-		{ valid_from: 'OK', code: 26, name: 'ROLO DE PAPEL ALUMÍNIO WYDA 30CMX7,5M', cost_price: 5.21, sales_price: 5.79 },
-		{ valid_from: 'OK', code: 1000, name: 'BEBIDA ENERGÉTICA VIBE 2L - 6 UNIDADES', cost_price: 48.54, sales_price: 53.94 },
-		{ valid_from: 'OK', code: 1010, name: 'KIT ROLO DE ALUMINIO + FILME PVC WYDA', cost_price: 8.80, sales_price: 9.78 },
-		{ valid_from: 'OK', code: 1020, name: 'SUPER PACK RED BULL VARIADOS - 6 UNIDADES', cost_price: 51.81, sales_price: 57.00 },
-	];
+
 	const [data, setData] = useState<ProductType[] | null>(null);
-	const [loading, setLoading] = useState(false);
 
 	const handleUploadFile = async () => {
 		if (fileInputRef.current?.files && fileInputRef.current?.files?.length > 0) {
-			if (fileInputRef.current.files[0].size > 1000000) {
-				alert('O arquivo deve ter no máximo 1MB');
-				return;
-			}
-
+			
 			setLoading(true);
 
 			const file = fileInputRef.current.files[0];
@@ -43,15 +25,21 @@ const Page = () => {
 
 			formData.append('file', file);
 			try {
-				const response = await api.post('/api/upload', file);
-				console.log(response);
+				const response = await api.post('/api/upload/', formData);
+				setData(response.data);
+
+				if (response.data.length > 0) {
+					setIsValidate(true);
+					response.data.forEach((item: { valid_from: string; }) => {
+						if (item.valid_from !== 'OK') {
+							setIsValidate(false);
+						}
+					});
+				}
+
 			} catch (error) {
 				console.log(error); //falta tratar erros
 			} finally {
-
-				//remover
-				setData(dt);
-				setIsValidate(true);
 				
 				setTimeout(() => {
 					setLoading(false);
@@ -64,15 +52,19 @@ const Page = () => {
 	const handleUpdate = async () => {
 		setLoading(true);
 		try {
-			const response = await api.get('/update');
-			console.log(response);
-			setData(response.data);
-			setIsValidate(true);
+			let updateParams:any[] = []
+			data?.forEach((item) => {
+				updateParams.push({
+					code: item.code,
+					new_price: item.new_price,
+					sales_price: item.sales_price
+				});
+			});
+			const response = await api.post('/api/update', JSON.stringify(updateParams));
 			setData(null);
 		} catch (error) {
 			console.log(error); //falta tratar erros
 		} finally {
-			setData(null);
 			setIsValidate(false);
 			setTimeout(() => {
 				setLoading(false);
@@ -89,7 +81,7 @@ const Page = () => {
 					<h1 className="text-1xl font-bold text-gray-900 absolute">{action}</h1>
 				</div>
 			}
-			{!loading &&
+			{!loading && !isValidate &&
 				<div className="max-w-md flex-column gap-3 rounded-md border-2 border-dotted border-white px-3 py-3">
 					<input type="file" ref={fileInputRef} accept=".xls" />
 					<button onClick={handleUploadFile} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2">VALIDAR</button>
@@ -116,6 +108,9 @@ const Page = () => {
 												Preço de venda
 											</th>
 											<th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+												Novo preço de venda
+											</th>
+											<th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 												Validação
 											</th>
 										</tr>
@@ -134,6 +129,9 @@ const Page = () => {
 												</td>
 												<td className="px-4 py-4 whitespace-nowrap">
 													<div className="text-xs text-gray-900">{item.sales_price}</div>
+												</td>
+												<td className="px-4 py-4 whitespace-nowrap">
+													<div className="text-xs text-gray-900">{item.new_price}</div>
 												</td>
 												<td className="px-4 py-4 whitespace-nowrap">
 													<div className="text-xs text-gray-900">{item.valid_from !== 'OK' ?

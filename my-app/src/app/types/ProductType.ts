@@ -3,5 +3,6 @@ export type ProductType = {
 	  name: string;
 	  cost_price: number;
 	  sales_price: number;
+	  new_price?: number;
 	  valid_from: string;
 }
