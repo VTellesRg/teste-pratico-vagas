@@ -6,3 +6,8 @@ export type ProductType = {
 	  new_price?: number;
 	  valid_from: string;
 }
+
+export type ProductTypeUpdate = {
+	code: number;
+	new_price: number;
+}

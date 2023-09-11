@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductType } from './types/ProductType';
+import { ProductType, ProductTypeUpdate } from './types/ProductType';
 import { api } from './utils/api';
 import { useRef, useState } from 'react';
 
@@ -13,11 +13,11 @@ const Page = () => {
 	const [action, setAction] = useState('Validando...');
 
 
-	const [data, setData] = useState<ProductType[] | null>(null);
+	const [data, setData] = useState<ProductType[] | []>([]);
 
 	const handleUploadFile = async () => {
 		if (fileInputRef.current?.files && fileInputRef.current?.files?.length > 0) {
-			
+
 			setLoading(true);
 
 			const file = fileInputRef.current.files[0];
@@ -27,7 +27,6 @@ const Page = () => {
 			try {
 				const response = await api.post('/api/upload/', formData);
 				setData(response.data);
-
 				if (response.data.length > 0) {
 					setIsValidate(true);
 					response.data.forEach((item: { valid_from: string; }) => {
@@ -38,13 +37,12 @@ const Page = () => {
 				}
 
 			} catch (error) {
-				console.log(error); //falta tratar erros
 			} finally {
-				
+
 				setTimeout(() => {
 					setLoading(false);
 					setAction('Atualizando...');
-				}, 2000);
+				}, 500);
 			}
 		}
 	}
@@ -52,24 +50,28 @@ const Page = () => {
 	const handleUpdate = async () => {
 		setLoading(true);
 		try {
-			let updateParams:any[] = []
-			data?.forEach((item) => {
+			let updateParams: ProductTypeUpdate[] = [];
+			for (let i = 0; i < data.length; i++) {
 				updateParams.push({
-					code: item.code,
-					new_price: item.new_price,
-					sales_price: item.sales_price
+					code: data[i].code,
+					new_price: data[i].new_price as number,
 				});
+
+			}
+
+			const response = await api.post('/api/product/', JSON.stringify(updateParams), {
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				}
 			});
-			const response = await api.post('/api/update', JSON.stringify(updateParams));
-			setData(null);
+			setData([]);
 		} catch (error) {
-			console.log(error); //falta tratar erros
 		} finally {
 			setIsValidate(false);
 			setTimeout(() => {
 				setLoading(false);
 				setAction('Validando...');
-			}, 2000);
+			}, 500);
 		}
 	}
 
@@ -87,7 +89,7 @@ const Page = () => {
 					<button onClick={handleUploadFile} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2">VALIDAR</button>
 				</div>
 			}
-			{!loading && data &&
+			{!loading && data.length > 0 &&
 				<div className="flex flex-col mt-5">
 					<div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
 						<div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
